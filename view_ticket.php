@@ -2,13 +2,13 @@
 session_start();
 require_once 'includes/db.php';
 
-// Auth obligatoire
+// Vérif auth
 if (!isset($_SESSION['user_id'])) {
     header('Location: login.php');
     exit;
 }
 
-// CSRF token
+// Token CSRF
 if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
@@ -16,13 +16,13 @@ if (empty($_SESSION['csrf_token'])) {
 $user_id = $_SESSION['user_id'];
 $role    = $_SESSION['role'] ?? 'utilisateur';
 
-// Récup id ticket
+// Récupérer l’ID du ticket
 if (!isset($_GET['id']) || !ctype_digit($_GET['id'])) {
     die("Ticket invalide.");
 }
 $ticket_id = (int) $_GET['id'];
 
-// Charger le ticket (avec créateur et technicien)
+// Charger les données du ticket
 $stmt = $pdo->prepare(
     "SELECT t.*, 
             uc.nom  AS createur_nom,  uc.prenom  AS createur_prenom,
@@ -37,7 +37,7 @@ $ticket = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$ticket) { die("Ticket introuvable."); }
 
-// Droits d'accès : l'utilisateur simple ne voit que ses tickets
+// Vérif droits d’accès
 $isOwner = ($ticket['createur_id'] == $user_id);
 if ($role === 'utilisateur' && !$isOwner) { die("Accès refusé."); }
 
@@ -46,7 +46,7 @@ $errors = [];
 $infos  = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Sécurité CSRF
+    // Vérif token CSRF
     if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
         $errors[] = "Requête invalide (CSRF).";
     } else {
