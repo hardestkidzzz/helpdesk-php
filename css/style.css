@@ -130,3 +130,48 @@ html[data-bs-theme="dark"] .table-light {
   color: #e6e6e6 !important;            /* texte clair */
   border-color: rgba(255,255,255,0.1);
 }
+
+/* === Variables personnalisées pour les tables en sombre === */
+html[data-bs-theme="dark"] .table-light,
+html[data-bs-theme="dark"] .table thead,
+html[data-bs-theme="dark"] .table thead tr,
+html[data-bs-theme="dark"] .table thead th {
+  /* Variables pour les tables en sombre */
+  --bs-table-bg: #1a1d23 !important;
+  --bs-table-color: #e6e6e6 !important;
+  --bs-table-border-color: rgba(255,255,255,0.08) !important;
+  --bs-table-striped-bg: #181b21 !important;
+  --bs-table-striped-color: #e6e6e6 !important;
+  --bs-table-active-bg: #20242b !important;
+  --bs-table-active-color: #e6e6e6 !important;
+
+  background-color: var(--bs-table-bg) !important;
+  color: var(--bs-table-color) !important;
+  border-color: var(--bs-table-border-color) !important;
+}
+
+/* Lignes zébrées en sombre */
+html[data-bs-theme="dark"] .table-striped > tbody > tr:nth-of-type(odd) > * {
+  background-color: var(--bs-table-striped-bg) !important;
+  color: var(--bs-table-striped-color) !important;
+}
+html[data-bs-theme="dark"] .table-striped > tbody > tr:nth-of-type(even) > * {
+  background-color: var(--bs-table-active-bg) !important;
+  color: var(--bs-table-active-color) !important;
+}
+
+/* Bordures des cellules en sombre */
+html[data-bs-theme="dark"] .table > :not(caption) > * > * {
+  border-bottom-color: rgba(255,255,255,0.07) !important;
+}
+
+/* ===/ Variables personnalisées pour les tables en sombre /=== */
+/* Transitions douces pour les changements de thème */
+
+html, body,
+.card, .navbar, .dropdown-menu, .toast,
+.table, .table thead th, .table tbody td,
+.form-control, .form-select, .form-check-input,
+.page-link, .badge, .btn {
+  transition: background-color .3s ease, color .3s ease, border-color .3s ease, box-shadow .3s ease;
+}
