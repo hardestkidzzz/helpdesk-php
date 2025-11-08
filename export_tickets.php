@@ -2,13 +2,13 @@
 session_start();
 require_once 'includes/db.php';
 
-// Sécurité : seuls technicien / admin exportent
+// Vérifier que l'utilisateur est connecté et a le rôle approprié
 if (!isset($_SESSION['user_id']) || !in_array($_SESSION['role'], ['technicien','admin'])) {
     header('Location: login.php');
     exit;
 }
 
-// Requête : tous les tickets (ou adapte avec WHERE si besoin)
+// Récupérer tous les tickets
 $stmt = $pdo->query("SELECT t.id, t.titre, t.description, t.priorite, t.statut,
                             u.nom AS createur_nom, u.prenom AS createur_prenom,
                             t.date_creation, t.date_maj
@@ -17,11 +17,11 @@ $stmt = $pdo->query("SELECT t.id, t.titre, t.description, t.priorite, t.statut,
                      ORDER BY t.date_creation DESC");
 $tickets = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Headers HTTP
+// Générer le CSV
 header('Content-Type: text/csv; charset=utf-8');
 header('Content-Disposition: attachment; filename="tickets_helpdesk.csv"');
 
-// Flux de sortie
+// Ouvrir la sortie standard
 $output = fopen('php://output', 'w');
 
 // Entête du CSV

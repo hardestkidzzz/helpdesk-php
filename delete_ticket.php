@@ -10,7 +10,7 @@ $role    = $_SESSION['role'] ?? 'utilisateur';
 if (!isset($_GET['id']) || !ctype_digit($_GET['id'])) die("Ticket invalide.");
 $ticket_id = (int)$_GET['id'];
 
-// Vérifier droits
+// Récupérer le ticket et vérifier les permissions
 $st = $pdo->prepare("SELECT createur_id FROM tickets WHERE id=?");
 $st->execute([$ticket_id]);
 $t = $st->fetch(PDO::FETCH_ASSOC);
@@ -19,7 +19,7 @@ if (!$t) die("Ticket introuvable.");
 $isOwner = ($t['createur_id'] == $user_id);
 if (!$isOwner && $role !== 'admin') die("Accès refusé.");
 
-// Supprimer d'abord commentaires, puis ticket (si pas de cascade)
+// Supprimer les commentaires associés puis le ticket
 $pdo->prepare("DELETE FROM commentaires WHERE ticket_id=?")->execute([$ticket_id]);
 $pdo->prepare("DELETE FROM tickets WHERE id=?")->execute([$ticket_id]);
 

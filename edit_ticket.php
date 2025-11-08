@@ -10,17 +10,17 @@ $role    = $_SESSION['role'] ?? 'utilisateur';
 if (!isset($_GET['id']) || !ctype_digit($_GET['id'])) { die("Ticket invalide."); }
 $ticket_id = (int)$_GET['id'];
 
-// Charger ticket
+// Récupérer le ticket
 $st = $pdo->prepare("SELECT * FROM tickets WHERE id=?");
 $st->execute([$ticket_id]);
 $ticket = $st->fetch(PDO::FETCH_ASSOC);
 if (!$ticket) die("Ticket introuvable.");
 
-// Droits : créateur, technicien, admin
+// Vérifier les permissions : admin/technicien ou propriétaire du ticket
 $isOwner = ($ticket['createur_id'] == $user_id);
 if ($role === 'utilisateur' && !$isOwner) die("Accès refusé.");
 
-// CSRF
+// Générer un token CSRF
 if (empty($_SESSION['csrf_token'])) {
   $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
@@ -41,12 +41,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($titre === '' || $description === '') $errors[] = "Tous les champs sont requis.";
 
     if (!$errors) {
-      // Si tu n'as pas de colonne date_maj → enlève ", date_maj = NOW()"
+      // Mettre à jour le ticket
       $up = $pdo->prepare("UPDATE tickets SET titre=?, description=?, priorite=?, date_maj = NOW() WHERE id=?");
       $up->execute([$titre, $description, $priorite, $ticket_id]);
       $ok = true;
 
-      // Recharger
+      // Recharger les données du ticket
       $st = $pdo->prepare("SELECT * FROM tickets WHERE id=?");
       $st->execute([$ticket_id]);
       $ticket = $st->fetch(PDO::FETCH_ASSOC);

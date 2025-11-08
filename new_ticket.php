@@ -16,18 +16,18 @@ $page_title = 'Nouveau ticket';
 $errors = [];
 $infos   = [];
 
-// Valeurs par défaut / persistance
+// Récupérer les valeurs précédentes (si soumission avec erreurs)
 $titre        = trim($_POST['titre'] ?? '');
 $description  = trim($_POST['description'] ?? '');
 $priorite     = $_POST['priorite'] ?? 'moyenne';
 $allowedPrior = ['basse','moyenne','haute'];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-  // CSRF
+  // Vérification CSRF
   if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
     $errors[] = "Requête invalide (CSRF).";
   } else {
-    // Validations
+    // Validation des champs
     if ($titre === '')          $errors[] = "Le titre est requis.";
     if (mb_strlen($titre) > 120) $errors[] = "Le titre ne doit pas dépasser 120 caractères.";
     if ($description === '')     $errors[] = "La description est requise.";
@@ -35,19 +35,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!in_array($priorite, $allowedPrior)) $priorite = 'moyenne';
 
     if (!$errors) {
-      // Insertion
+      // Insertion en base
       $stmt = $pdo->prepare("
         INSERT INTO tickets (titre, description, priorite, statut, createur_id, date_creation)
         VALUES (?, ?, ?, 'ouvert', ?, NOW())
       ");
       $stmt->execute([$titre, $description, $priorite, $user_id]);
 
-      // Nettoyer le brouillon côté client (on fera via JS) et reset PHP
+      // Succès
       $infos[] = "Ticket créé avec succès.";
       $titre = $description = '';
       $priorite = 'moyenne';
 
-      // Redirection douce vers l’index ou vers le ticket créé (option) :
+      // Nettoyer le brouillon côté client (on fera via JS) et reset PHP
       // $newId = (int)$pdo->lastInsertId();
       // header("Location: view_ticket.php?id=".$newId); exit;
     }
@@ -111,7 +111,7 @@ require_once 'includes/header.php';
             </div>
           </div>
 
-          <!-- Priorité (toggle boutons) -->
+          <!-- Priorité -->
           <div class="mb-4">
             <label class="form-label d-block">Priorité</label>
             <div class="btn-group" role="group" aria-label="Priorité">
@@ -141,7 +141,7 @@ require_once 'includes/header.php';
       </div>
     </div>
 
-    <!-- Tips -->
+    <!-- Tip -->
     <div class="alert alert-info mt-3 mb-0">
       <i class="bi bi-lightbulb"></i> Conseil : plus ta description est claire, plus la résolution sera rapide.
     </div>
@@ -156,7 +156,7 @@ require_once 'includes/header.php';
   const $cd    = document.getElementById('countDesc');
   const $form  = document.getElementById('ticketForm');
 
-  // Compteurs
+  // Compteurs de caractères
   function updateCounts() {
     $ct.textContent = ($titre.value || '').length;
     $cd.textContent = ($desc.value  || '').length;
@@ -165,7 +165,7 @@ require_once 'includes/header.php';
   $desc.addEventListener('input', updateCounts);
   updateCounts();
 
-  // Chips insertion
+  // Quick chips
   document.querySelectorAll('.chip').forEach(btn => {
     btn.addEventListener('click', () => {
       const insert = btn.getAttribute('data-insert') || '';
@@ -180,7 +180,7 @@ require_once 'includes/header.php';
     });
   });
 
-  // Draft autosave (localStorage)
+  // Brouillon dans le localStorage
   const DKEY = 'ticket-draft';
   function saveDraft() {
     const data = {
@@ -206,11 +206,11 @@ require_once 'includes/header.php';
   }
   function clearDraft() { localStorage.removeItem(DKEY); }
 
-  // Charger le brouillon au chargement si le formulaire est vide (pas d’erreurs serveur)
+  // Charger le draft si pas d’erreurs ni d’infos (nouveau ticket)
   if (!<?= json_encode((bool)$errors) ?> && !<?= json_encode((bool)$infos) ?>) {
     if (!$titre.value && !$desc.value) loadDraft();
   }
-  // Sauvegarde à la volée
+  // Sauvegarder le draft à chaque modification
   $titre.addEventListener('input', saveDraft);
   $desc.addEventListener('input', saveDraft);
   document.querySelectorAll('input[name="priorite"]').forEach(r => r.addEventListener('change', saveDraft));
@@ -226,14 +226,14 @@ require_once 'includes/header.php';
     }
   });
 
-  // Raccourci clavier: Ctrl/Cmd + Enter
+  // Raccourci Ctrl/Cmd + Enter pour soumettre
   document.addEventListener('keydown', (e) => {
     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
       $form.requestSubmit();
     }
   });
 
-  // Si succès, on nettoie le draft
+  // Nettoyer le draft si succès
   <?php if ($infos): ?>
     clearDraft();
   <?php endif; ?>

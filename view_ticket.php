@@ -41,7 +41,7 @@ if (!$ticket) { die("Ticket introuvable."); }
 $isOwner = ($ticket['createur_id'] == $user_id);
 if ($role === 'utilisateur' && !$isOwner) { die("Accès refusé."); }
 
-// Gestion des actions POST
+// Traitement des actions POST
 $errors = [];
 $infos  = [];
 
@@ -77,7 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!in_array($nouveau, $allowed)) {
                 $errors[] = "Statut invalide.";
             } else {
-                // Si aucun technicien assigné, s'assigner automatiquement
+                // Si aucun technicien assigné, s’assigner automatiquement
                 if (empty($ticket['technicien_id'])) {
                     $stmt = $pdo->prepare("UPDATE tickets SET statut = ?, technicien_id = ?, date_maj = NOW() WHERE id = ?");
                     $stmt->execute([$nouveau, $user_id, $ticket_id]);
@@ -156,13 +156,13 @@ $stmt = $pdo->prepare(
 $stmt->execute([$ticket_id]);
 $comments = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// ---- Vue (avec header/footer Bootstrap) ----
+// ----- Vue (avec header/footer Bootstrap) ----
 $page_title = "Ticket #".$ticket['id'];
 require_once 'includes/header.php';
 ?>
 
 <style>
-/* Timeline très légère */
+/* Timeline des commentaires */
 .timeline { position: relative; }
 .timeline::before { content:""; position:absolute; left:20px; top:0; bottom:0; width:2px; background:rgba(0,0,0,.08); }
 .timeline-item { position:relative; padding-left:56px; margin-bottom:18px; }
@@ -172,7 +172,7 @@ require_once 'includes/header.php';
 .badge-pill{ border-radius:999px; padding:.35rem .6rem; }
 </style>
 
-<?php // Messages en alert (tu peux basculer en toasts si tu veux)
+<?php // Messages d’erreur/info
 foreach ($errors as $e)  echo '<div class="alert alert-danger">'.$e.'</div>';
 foreach ($infos  as $i)  echo '<div class="alert alert-success">'.$i.'</div>';
 ?>
@@ -182,7 +182,7 @@ foreach ($infos  as $i)  echo '<div class="alert alert-success">'.$i.'</div>';
   <div class="col-lg-8">
     <div class="card shadow-sm">
       <div class="card-body">
-        <!-- En-tête ticket -->
+        <!-- En-tête du ticket -->
         <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
           <div>
             <h2 class="h4 mb-1">Ticket n°<?= $ticket_numero ?> · <?= htmlspecialchars($ticket['titre']) ?></h2>
@@ -208,11 +208,11 @@ foreach ($infos  as $i)  echo '<div class="alert alert-success">'.$i.'</div>';
 
         <hr class="my-3">
 
-        <!-- Description -->
+        <!-- Description du ticket -->
         <h3 class="h6 text-uppercase text-muted mb-2">Description</h3>
         <p class="mb-0"><?= nl2br(htmlspecialchars($ticket['description'])) ?></p>
 
-        <!-- Actions principales -->
+        <!-- Actions possibles -->
         <div class="mt-3 d-flex flex-wrap gap-2">
           <?php if ($role === 'admin' || $role === 'technicien' || $isOwner): ?>
             <a href="edit_ticket.php?id=<?= (int)$ticket['id'] ?>" class="btn btn-outline-warning btn-sm">
@@ -255,7 +255,7 @@ foreach ($infos  as $i)  echo '<div class="alert alert-success">'.$i.'</div>';
 
         <?php if ($role === 'technicien' || $role === 'admin'): ?>
           <hr class="my-3">
-          <!-- Changement de statut détaillé -->
+          <!-- Formulaire de changement de statut -->
           <form method="POST" class="row g-2 align-items-end">
             <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
             <input type="hidden" name="action" value="change_status">
@@ -275,7 +275,7 @@ foreach ($infos  as $i)  echo '<div class="alert alert-success">'.$i.'</div>';
       </div>
     </div>
 
-    <!-- Timeline commentaires -->
+    <!-- Section des commentaires -->
     <div class="card shadow-sm mt-3">
       <div class="card-body">
         <h3 class="h6 text-uppercase text-muted mb-3">Commentaires (<?= count($comments) ?>)</h3>
@@ -299,7 +299,7 @@ foreach ($infos  as $i)  echo '<div class="alert alert-success">'.$i.'</div>';
       </div>
     </div>
 
-    <!-- Ajouter un commentaire ou message "fermé" -->
+    <!-- Formulaire d’ajout de commentaire -->
     <?php if ($ticket['statut'] !== 'resolu'): ?>
       <div class="card shadow-sm mt-3">
         <div class="card-body">
@@ -322,7 +322,7 @@ foreach ($infos  as $i)  echo '<div class="alert alert-success">'.$i.'</div>';
     <?php endif; ?>
   </div>
 
-  <!-- Sidebar d’infos -->
+  <!-- Sidebar d’informations -->
   <div class="col-lg-4">
     <div class="card shadow-sm">
       <div class="card-body">

@@ -8,7 +8,7 @@ $role = $_SESSION['role'] ?? null;
   <meta charset="UTF-8">
   <title><?= isset($page_title) ? htmlspecialchars($page_title) : 'Helpdesk' ?></title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <!-- Bootstrap 5.3+ -->
+  <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <!-- Bootstrap Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">

@@ -2,14 +2,14 @@
 session_start();
 require_once 'includes/db.php';
 if (!isset($_SESSION['user_id'])) { header('Location: login.php'); exit; }
-
+// Récupérer les infos utilisateur
 $user_id = $_SESSION['user_id'];
 $role    = $_SESSION['role'];
-
+// Titre de la page
 $page_title = 'Tableau de bord';
 require_once 'includes/header.php';
 
-// --------- Filtres ---------
+// --------- Gestion des filtres & pagination ---------
 $statut    = $_GET['statut']    ?? '';
 $priorite  = $_GET['priorite']  ?? '';
 $q         = trim($_GET['q'] ?? '');
@@ -29,7 +29,7 @@ $limit  = 10;
 $page   = max(1, (int)($_GET['page'] ?? 1));
 $offset = ($page - 1) * $limit;
 
-// Base & WHERE
+// Construire la requête avec filtres
 $params = [];
 $where  = [];
 
@@ -54,7 +54,7 @@ if ($q !== '') {
     $params[] = "%$q%";
     $params[] = "%$q%";
 }
-// Filtre "Assigné à moi" (tech/admin)
+// Filtre "Assigné à moi" pour technicien/admin
 if (($role === 'technicien' || $role === 'admin') && $assigned === 'me') {
     $where[] = "t.technicien_id = ?";
     $params[] = $user_id;
@@ -62,7 +62,7 @@ if (($role === 'technicien' || $role === 'admin') && $assigned === 'me') {
 
 $whereSql = count($where) ? " WHERE ".implode(" AND ", $where) : "";
 
-// Total pour pagination
+// Count total
 $countSql = "SELECT COUNT(*) ".$base.$whereSql;
 $stmt = $pdo->prepare($countSql);
 $stmt->execute($params);
@@ -78,7 +78,7 @@ $allowedSorts = [
 ];
 $orderSql = $allowedSorts[$sort] ?? $allowedSorts['date_desc'];
 
-// Data
+// Construire la requête finale
 $numeroExpr = "(SELECT COUNT(*)
                FROM tickets t2
                WHERE t2.date_creation > t.date_creation
@@ -94,7 +94,7 @@ if ($role === 'technicien' || $role === 'admin') {
 }
 
 
-// 🔒 Sécurise $tickets pour éviter 'Undefined variable'
+// 🔒 Sécurise
 $tickets = [];
 $db_error = null;
 try {
@@ -112,13 +112,13 @@ $stmt = $pdo->prepare($dataSql);
 $stmt->execute($params);
 $exportUrl = 'export_tickets.php';
 if (!empty($_GET)) {
-  $exportUrl .= '?' . http_build_query($_GET); // transmet les filtres à l’export
+  $exportUrl .= '?' . http_build_query($_GET); // conserver les filtres à l’export
 }
 ?>
 
 
 <?php
-// KPI
+//
 $kpi = ['ouvert'=>0,'en_cours'=>0,'resolu'=>0];
 $kstmt = $pdo->prepare("SELECT statut, COUNT(*) nb FROM tickets t ".($role==='utilisateur'?"WHERE t.createur_id=?":"")." GROUP BY statut");
 $kstmt->execute($role==='utilisateur' ? [$user_id] : []);
@@ -180,7 +180,7 @@ foreach ($kstmt->fetchAll(PDO::FETCH_ASSOC) as $r) { $kpi[$r['statut']] = (int)$
 <ul class="nav nav-pills mb-2">
   <?php
     $baseUrl = strtok($_SERVER['REQUEST_URI'], '?'); // /helpdesk/index.php
-    // On garde les filtres existants sauf 'statut'
+    // Construire les liens en conservant les autres filtres
     $keep = $_GET; unset($keep['statut'], $keep['page']);
     function linkWith($arr){ return '?' . http_build_query($arr); }
   ?>
@@ -338,12 +338,12 @@ foreach ($kstmt->fetchAll(PDO::FETCH_ASSOC) as $r) { $kpi[$r['statut']] = (int)$
   const form = document.getElementById('filtersForm');
   if (!form) return;
 
-  // submit immédiat sur select & checkbox
+  // changements de select & checkbox
   form.querySelectorAll('select, input[type="checkbox"]').forEach(el => {
     el.addEventListener('change', () => form.submit());
   });
 
-  // recherche avec debounce
+  // recherche avec délai
   const search = form.querySelector('input[name="q"]');
   let t;
   if (search) {

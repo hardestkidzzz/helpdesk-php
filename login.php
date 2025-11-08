@@ -3,7 +3,7 @@ session_start();
 require_once 'includes/db.php';
 
 $error = '';
-
+// Traiter le formulaire de connexion
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = trim($_POST['email'] ?? '');
     $mot_de_passe = $_POST['mot_de_passe'] ?? '';
@@ -22,7 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = "Identifiants incorrects. Vérifiez l'email et le mot de passe.";
     }
 }
-
+// Afficher le formulaire
 $page_title = 'Connexion';
 require_once 'includes/header.php';
 ?>

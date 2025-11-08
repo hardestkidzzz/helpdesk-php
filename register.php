@@ -3,10 +3,10 @@ session_start();
 require_once 'includes/db.php';
 $page_title = 'Créer un compte';
 require_once 'includes/header.php';
-
+// Initialiser les variables
 $errors = [];
 $ok = false;
-
+// Traiter le formulaire
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nom    = trim($_POST['nom'] ?? '');
     $prenom = trim($_POST['prenom'] ?? '');

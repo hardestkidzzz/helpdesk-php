@@ -1,5 +1,5 @@
 <?php
-// stats.php
+// stats.php - Page de statistiques pour le helpdesk
 session_start();
 require_once 'includes/db.php';
 if (!isset($_SESSION['user_id'])) { header('Location: login.php'); exit; }
@@ -7,14 +7,14 @@ if (!isset($_SESSION['user_id'])) { header('Location: login.php'); exit; }
 $user_id = (int)$_SESSION['user_id'];
 $role    = $_SESSION['role'] ?? 'utilisateur';
 
-// Autoriser tout le monde à voir ses stats perso ; stats globales si technicien/admin
+// Déterminer si l'utilisateur est technicien ou admin
 $isTechOrAdmin = in_array($role, ['technicien','admin'], true);
 
 $page_title = 'Statistiques';
 require_once 'includes/header.php';
 
 /* -------------------- KPI -------------------- */
-// Portée: globale si tech/admin, sinon uniquement tickets créés par l'utilisateur
+// Autoriser tout le monde à voir ses stats perso ; stats globales si technicien/admin
 $scopeWhere = $isTechOrAdmin ? "" : "WHERE createur_id = ?";
 $scopeParams = $isTechOrAdmin ? [] : [$user_id];
 
@@ -40,8 +40,8 @@ $prioStmt->execute($scopeParams);
 $prio = ['haute'=>0,'moyenne'=>0,'basse'=>0];
 foreach ($prioStmt->fetchAll(PDO::FETCH_ASSOC) as $r) $prio[$r['priorite']] = (int)$r['nb'];
 
-// Tickets / jour (30 derniers jours)
-$days = 30; // tu peux rendre ça dynamique via $_GET['days'] (7/30/90)
+// Tendance des créations sur les derniers jours
+$days = 30;
 $trendWhere = "WHERE date_creation >= DATE_SUB(CURDATE(), INTERVAL ".($days-1)." DAY)";
 $trendParams = [];
 
@@ -59,7 +59,7 @@ $trendStmt = $pdo->prepare("
 ");
 $trendStmt->execute($trendParams);
 
-// Préparer la série complète (jours manquants à 0)
+// Initialiser les jours à 0
 $trend = [];
 for ($i = $days-1; $i >= 0; $i--) {
   $day = (new DateTime())->modify("-$i day")->format('Y-m-d');
@@ -69,7 +69,7 @@ foreach ($trendStmt->fetchAll(PDO::FETCH_ASSOC) as $r) {
   $trend[$r['d']] = (int)$r['nb'];
 }
 
-// Tickets par technicien (top 6) – seulement tech/admin
+// Répartition par technicien (Top 6) – uniquement pour techniciens/admins
 $byTech = [];
 if ($isTechOrAdmin) {
   $techStmt = $pdo->query("
@@ -83,7 +83,8 @@ if ($isTechOrAdmin) {
   $byTech = $techStmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
-// Temps de résolution moyen (en heures) – nécessite une colonne date_resolu
+// Temps de résolution moyen
+// (nécessite une colonne date_resolu)
 // (voir note plus bas pour l’ajouter automatiquement)
 $avgHours = null;
 $avgStmt = $pdo->prepare("

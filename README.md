@@ -23,7 +23,8 @@ Projet développé en PHP: une application de gestion de tickets d'assistance.
    ```sql
    INSERT INTO users (nom, prenom, email, mot_de_passe, role)
    VALUES ('Admin', 'Root', 'admin@example.com', '$2y$10$K9iIC1Q.C0C8TovUxLShE.v3v3WJX6MwcmmxSOZnZRAxLue7tKSuS', 'admin');
-   ps: le mdp est hashé donc il donne : admin123
+
+ps: le mdp est hashé donc il donne : admin123
 
 ### 🧩 Stack technique
 - PHP 8.2
