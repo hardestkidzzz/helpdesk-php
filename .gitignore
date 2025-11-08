@@ -1,0 +1,19 @@
+# Fichiers système
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
+
+# Fichier de config local (à ne pas exposer)
+includes/db.php
+
+# Dossiers temporaires
+uploads/
+exports/
+vendor/
+node_modules/
